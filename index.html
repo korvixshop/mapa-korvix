@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Ubicación de Entrega — KorvixShop</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Poppins',sans-serif;background:#f0f0f0;padding:1rem}
+#kv-wrap{max-width:500px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15)}
+.kv-titulo{background:#1a1a1a;color:#fff;padding:1rem;text-align:center;font-size:16px;font-weight:700;line-height:1.4}
+.kv-instrucciones{background:#f9f9f9;border:1px solid #e0e0e0;border-top:none;padding:.85rem 1rem}
+.kv-subtitulo{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:.75rem}
+.kv-paso{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:.5px solid #eee;font-size:13px;color:#333;line-height:1.6}
+.kv-paso:last-child{border-bottom:none}
+.kv-num{width:22px;height:22px;background:#cc0000;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:11px;font-weight:700;margin-top:2px}
+.kv-texto strong{display:block;font-weight:600;color:#1a1a1a;font-size:13px}
+.kv-btn-gps{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:.6rem;background:#cc0000;color:#fff;border:none;padding:.65rem 1rem;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif}
+.kv-buscar{padding:.75rem 1rem;background:#f5f5f5;border:1px solid #e0e0e0;border-top:none}
+.kv-buscar label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:6px}
+.kv-buscar-row{display:flex;flex-direction:column;gap:8px}
+.kv-buscar-row input{width:100%;padding:.65rem .75rem;border:1px solid #ccc;border-radius:6px;font-size:14px;font-family:'Poppins',sans-serif;outline:none}
+.kv-buscar-row input:focus{border-color:#cc0000}
+.kv-buscar-row button{width:50%;margin:0 auto;background:#cc0000;color:#fff;border:none;padding:.65rem 1rem;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;display:block}
+#kv-map{height:300px;width:100%;border:1px solid #e0e0e0;border-top:none}
+.kv-btn-confirmar{display:block;width:calc(100% - 2rem);margin:.75rem 1rem 1rem;background:#FFBE00;color:#000;border:none;padding:.85rem 1rem;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;text-align:center}
+.kv-exito{display:none;background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:1rem;margin:.75rem 1rem 1rem;text-align:center;font-size:14px;color:#2e7d32;font-weight:600}
+</style>
+</head>
+<body>
+<div id="kv-wrap">
+
+  <div class="kv-titulo">📍 Marcá tu ubicación exacta para garantizar una rápida entrega</div>
+
+  <div class="kv-instrucciones">
+    <div class="kv-subtitulo">3 formas de registrar tu ubicación:</div>
+
+    <div class="kv-paso">
+      <div class="kv-num">1</div>
+      <div class="kv-texto">
+        <strong>📱 Usá tu ubicación actual</strong>
+        ¡Tocá el botón y el pin cae directo en tu casa sin escribir nada!
+        <button class="kv-btn-gps" onclick="kvUsarUbicacion()">
+          <svg viewBox="0 0 40 55" xmlns="http://www.w3.org/2000/svg" width="20" height="28"><ellipse cx="20" cy="52" rx="7" ry="3" fill="rgba(255,255,255,0.3)"/><path d="M20 2 C10 2 3 9 3 18 C3 30 20 50 20 50 C20 50 37 30 37 18 C37 9 30 2 20 2 Z" fill="#fff"/><circle cx="20" cy="18" r="7" fill="#cc0000"/></svg>
+          Usar mi ubicación actual
+        </button>
+      </div>
+    </div>
+
+    <div class="kv-paso">
+      <div class="kv-num">2</div>
+      <div class="kv-texto">
+        <strong>✍️ Escribí tu dirección</strong>
+        Escribí tu dirección exacta en el buscador de abajo y presioná Buscar.
+      </div>
+    </div>
+
+    <div class="kv-paso">
+      <div class="kv-num">3</div>
+      <div class="kv-texto">
+        <strong>⚠️ Si tu calle no tiene nombre</strong>
+        Podés mover el mapa con los 2 dedos y luego presionar en tu ubicación para que aparezca el pin rojo directamente sobre tu casa.
+      </div>
+    </div>
+  </div>
+
+  <div class="kv-buscar">
+    <label>Buscar</label>
+    <div class="kv-buscar-row">
+      <input type="text" id="kv-buscar-input" placeholder="Escribí tu dirección, barrio, calle o referencia..."/>
+      <button onclick="kvBuscar()">Buscar</button>
+    </div>
+  </div>
+
+  <div id="kv-map"></div>
+
+  <button class="kv-btn-confirmar" onclick="kvConfirmar()">✅ Confirmar mi ubicación de entrega</button>
+  <div class="kv-exito" id="kv-exito">🎉 ¡Ubicación confirmada! Nos vemos en tu puerta.</div>
+
+</div>
+
+<script>
+var kvMap, kvMarker, kvGeocoder;
+var kvUbicacionFinal = '';
+
+function initKvMap(){
+  kvGeocoder = new google.maps.Geocoder();
+  kvMap = new google.maps.Map(document.getElementById('kv-map'),{
+    center:{lat:-25.2867,lng:-57.6470},
+    zoom:13,
+    mapTypeControl:false,
+    streetViewControl:false,
+    fullscreenControl:false
+  });
+
+  kvMarker = new google.maps.Marker({
+    position:{lat:-25.2867,lng:-57.6470},
+    map:kvMap,
+    draggable:true,
+    icon:{
+      url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent('<svg viewBox="0 0 40 55" xmlns="http://www.w3.org/2000/svg" width="32" height="44"><ellipse cx="20" cy="52" rx="7" ry="3" fill="rgba(0,0,0,0.2)"/><path d="M20 2 C10 2 3 9 3 18 C3 30 20 50 20 50 C20 50 37 30 37 18 C37 9 30 2 20 2 Z" fill="#cc0000"/><circle cx="20" cy="18" r="8" fill="white"/><circle cx="20" cy="18" r="4" fill="#cc0000"/></svg>'),
+      scaledSize:new google.maps.Size(32,44),
+      anchor:new google.maps.Point(16,44)
+    }
+  });
+
+  google.maps.event.addListener(kvMarker,'dragend',function(){
+    kvActDir(kvMarker.getPosition().lat(),kvMarker.getPosition().lng());
+  });
+
+  kvMap.addListener('click',function(e){
+    kvMarker.setPosition(e.latLng);
+    kvActDir(e.latLng.lat(),e.latLng.lng());
+  });
+
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var ll={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      kvMap.setCenter(ll);kvMap.setZoom(16);
+      kvMarker.setPosition(ll);kvActDir(ll.lat,ll.lng);
+    });
+  }
+}
+
+function kvActDir(lat,lng){
+  kvGeocoder.geocode({location:{lat:lat,lng:lng}},function(r,s){
+    if(s==='OK'&&r[0]){
+      kvUbicacionFinal='Lat:'+lat.toFixed(6)+',Lng:'+lng.toFixed(6)+' | '+r[0].formatted_address;
+    }
+  });
+}
+
+window.kvUsarUbicacion=function(){
+  var btn=document.querySelector('.kv-btn-gps');
+  btn.innerHTML='📍 Buscando...';btn.disabled=true;
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(p){
+      var ll={lat:p.coords.latitude,lng:p.coords.longitude};
+      kvMap.setCenter(ll);kvMap.setZoom(16);
+      kvMarker.setPosition(ll);kvActDir(ll.lat,ll.lng);
+      btn.innerHTML='✅ Ubicación encontrada';btn.style.background='#2e7d32';
+    },function(){
+      btn.innerHTML='<svg viewBox="0 0 40 55" xmlns="http://www.w3.org/2000/svg" width="20" height="28"><ellipse cx="20" cy="52" rx="7" ry="3" fill="rgba(255,255,255,0.3)"/><path d="M20 2 C10 2 3 9 3 18 C3 30 20 50 20 50 C20 50 37 30 37 18 C37 9 30 2 20 2 Z" fill="#fff"/><circle cx="20" cy="18" r="7" fill="#cc0000"/></svg> Usar mi ubicación actual';
+      btn.disabled=false;
+      alert('No pudimos obtener tu ubicación. Usá el buscador.');
+    });
+  }
+};
+
+window.kvBuscar=function(){
+  var q=document.getElementById('kv-buscar-input').value.trim();
+  if(!q)return;
+  kvGeocoder.geocode({address:q+', Paraguay'},function(r,s){
+    if(s==='OK'&&r[0]){
+      var loc=r[0].geometry.location;
+      kvMap.setCenter(loc);kvMap.setZoom(16);
+      kvMarker.setPosition(loc);kvActDir(loc.lat(),loc.lng());
+    }else{alert('No encontramos esa dirección. Intentá con otro nombre o mové el pin manualmente.');}
+  });
+};
+
+document.getElementById('kv-buscar-input').addEventListener('keypress',function(e){
+  if(e.key==='Enter')window.kvBuscar();
+});
+
+window.kvConfirmar=function(){
+  if(!kvUbicacionFinal){alert('Por favor marcá tu ubicación en el mapa primero.');return;}
+  localStorage.setItem('kv_ubicacion',kvUbicacionFinal);
+  document.getElementById('kv-btn-confirmar').style.display='none';
+  document.getElementById('kv-exito').style.display='block';
+  setTimeout(function(){window.history.back();},3000);
+};
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAj5JTV8ipzgn9Si52cKzTYQVWD_tljkmk&callback=initKvMap&libraries=places" async defer></script>
+</body>
+</html>
