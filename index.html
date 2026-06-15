@@ -89,7 +89,8 @@ function initKvMap(){
   kvGeocoder = new google.maps.Geocoder();
   kvMap = new google.maps.Map(document.getElementById('kv-map'),{
     center:{lat:-25.2867,lng:-57.6470},
-    zoom:13,
+    zoom:15,
+    mapTypeId:'roadmap',
     mapTypeControl:false,
     streetViewControl:false,
     fullscreenControl:false
