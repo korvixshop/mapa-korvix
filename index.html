@@ -75,6 +75,9 @@ body{font-family:'Poppins',sans-serif;background:#f0f0f0;padding:1rem}
   </div>
 
   <div id="kv-map"></div>
+  <div style="text-align:center;padding:.5rem 1rem;background:#f5f5f5;border:1px solid #e0e0e0;border-top:none">
+    <button onclick="kvRecargarMapa()" style="background:none;border:none;color:#cc0000;font-size:12px;font-family:Poppins,sans-serif;cursor:pointer;font-weight:600">🔄 ¿No ves las calles? Tocá aquí para recargar</button>
+  </div>
 
   <button class="kv-btn-confirmar" onclick="kvConfirmar()">✅ Confirmar mi ubicación de entrega</button>
   <div class="kv-exito" id="kv-exito">🎉 ¡Ubicación confirmada! Nos vemos en tu puerta.</div>
@@ -166,6 +169,17 @@ document.getElementById('kv-buscar-input').addEventListener('keypress',function(
   if(e.key==='Enter')window.kvBuscar();
 });
 
+window.kvRecargarMapa=function(){
+  if(kvMap){
+    var center=kvMap.getCenter();
+    var zoom=kvMap.getZoom();
+    kvMap.setMapTypeId('roadmap');
+    google.maps.event.trigger(kvMap,'resize');
+    kvMap.setCenter(center);
+    kvMap.setZoom(zoom);
+  }
+};
+
 window.kvConfirmar=function(){
   if(!kvUbicacionFinal){alert('Por favor marcá tu ubicación en el mapa primero.');return;}
   localStorage.setItem('kv_ubicacion',kvUbicacionFinal);
@@ -177,3 +191,4 @@ window.kvConfirmar=function(){
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAj5JTV8ipzgn9Si52cKzTYQVWD_tljkmk&callback=initKvMap&libraries=places" async defer></script>
 </body>
 </html>
+
