@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,7 +24,6 @@ body{font-family:'Poppins',sans-serif;background:#f0f0f0;padding:1rem}
 #kv-map{height:300px;width:100%;border:1px solid #e0e0e0;border-top:none}
 .kv-recargar-wrap{padding:.5rem 1rem;background:#f5f5f5;border:1px solid #e0e0e0;border-top:none;text-align:center}
 .kv-btn-recargar{background:#1a1a1a;color:#fff;border:none;padding:.5rem 1.25rem;border-radius:6px;font-size:12px;font-family:'Poppins',sans-serif;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:6px}
-.kv-btn-recargar:hover{background:#333}
 .kv-coords{padding:.5rem 1rem;background:#fff;border:1px solid #e0e0e0;border-top:none;font-size:11px;color:#888;font-family:'Poppins',sans-serif;min-height:32px}
 #kv-btn-confirmar{display:block;width:calc(100% - 2rem);margin:.75rem 1rem 1rem;background:#cc0000;color:#fff;border:none;padding:.85rem 1rem;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;text-align:center;position:relative;overflow:hidden;}
 #kv-btn-confirmar::after{content:'';position:absolute;top:-50%;left:-60%;width:40%;height:200%;background:rgba(255,255,255,0.25);transform:skewX(-20deg);animation:brillo 2.5s infinite;}
@@ -101,6 +99,12 @@ body{font-family:'Poppins',sans-serif;background:#f0f0f0;padding:1rem}
 var kvMap, kvMarker, kvGeocoder, kvAutocomplete;
 var kvUbicacionFinal = '';
 
+// Obtener el ID del pedido de la URL
+function getOrdenId() {
+  var params = new URLSearchParams(window.location.search);
+  return params.get('orden') || '';
+}
+
 function kvMostrarError(msg) {
   document.getElementById('kv-error-msg').textContent = msg;
   document.getElementById('kv-error').style.display = 'block';
@@ -163,12 +167,11 @@ function initKvMap(){
 
   } catch(e) {
     kvMostrarError('Error al cargar el mapa. Recargá la página.');
-    console.error('Error initKvMap:', e);
   }
 }
 
 function kvActDir(lat,lng){
-  document.getElementById('kv-coords').textContent = '📍 Lat: '+lat.toFixed(6)+', Lng: '+lng.toFixed(6)+' — Verificando dirección...';
+  document.getElementById('kv-coords').textContent = '📍 Verificando dirección...';
   kvGeocoder.geocode({location:{lat:lat,lng:lng}},function(r,s){
     if(s==='OK'&&r[0]){
       kvUbicacionFinal = 'Lat:'+lat.toFixed(6)+',Lng:'+lng.toFixed(6)+' | '+r[0].formatted_address;
@@ -225,16 +228,36 @@ window.kvRecargarMapa=function(){
 
 window.kvConfirmar=function(){
   if(!kvUbicacionFinal){ kvMostrarError('Por favor marcá tu ubicación en el mapa primero.'); return; }
-  localStorage.setItem('kv_ubicacion', kvUbicacionFinal);
-  document.getElementById('kv-btn-confirmar').style.display='none';
-  document.getElementById('kv-exito').style.display='block';
-  console.log('Ubicación guardada:', kvUbicacionFinal);
+
+  var ordenId = getOrdenId();
+  var btn = document.getElementById('kv-btn-confirmar');
+  btn.innerHTML = '⏳ Guardando...';
+  btn.disabled = true;
+
+  // Enviar ubicación a Netlify
+  fetch('https://capable-blini-a2e33f.netlify.app/.netlify/functions/guardar-ubicacion', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      ubicacion: kvUbicacionFinal,
+      orden_id: ordenId
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    btn.style.display='none';
+    document.getElementById('kv-exito').style.display='block';
+  })
+  .catch(function(){
+    // Si falla el envío, igual mostramos éxito al cliente
+    btn.style.display='none';
+    document.getElementById('kv-exito').style.display='block';
+  });
 };
 
 window.gm_authFailure = function(){
-  kvMostrarError('Error de autenticación con Google Maps. Verificá que la API Key sea correcta.');
-  document.getElementById('kv-map').style.background='#fff3cd';
-  document.getElementById('kv-map').innerHTML='<div style="padding:2rem;text-align:center;color:#856404;font-family:Poppins,sans-serif;font-size:13px">⚠️ No se pudo cargar el mapa.<br>Verificá la API Key de Google.</div>';
+  kvMostrarError('Error de autenticación con Google Maps.');
+  document.getElementById('kv-map').innerHTML='<div style="padding:2rem;text-align:center;color:#856404;font-family:Poppins,sans-serif;font-size:13px">⚠️ No se pudo cargar el mapa.</div>';
 };
 </script>
 
@@ -242,4 +265,3 @@ window.gm_authFailure = function(){
 
 </body>
 </html>
-
