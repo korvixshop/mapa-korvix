@@ -36,9 +36,12 @@ exports.handler = async function(event) {
         }
       );
       const shopifyData = await shopifyRes.json();
-      shopify_id = shopifyData.orders && shopifyData.orders.length > 0
-        ? shopifyData.orders[0].id
-        : `no_encontrado_status_${shopifyRes.status}`;
+      if (shopifyData.orders && shopifyData.orders.length > 0) {
+        const rawId = shopifyData.orders[0].id;
+        shopify_id = `gid://shopify/Order/${rawId}`;
+      } else {
+        shopify_id = `no_encontrado_status_${shopifyRes.status}`;
+      }
     } catch(e) {
       shopify_id = `error_${e.message}`;
     }
