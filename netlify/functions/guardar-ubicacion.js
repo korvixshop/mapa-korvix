@@ -28,7 +28,7 @@ exports.handler = async function(event) {
     let shopify_id = null;
     try {
       const shopifyRes = await fetch(
-        `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders.json?name=%23${orden_id}&status=any`,
+       `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders.json?name=${orden_id}&status=any`,
         {
           headers: {
             'X-Shopify-Access-Token': process.env.SHOPIFY_TOKEN,
