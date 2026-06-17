@@ -17,45 +17,20 @@ exports.handler = async function(event) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Faltan datos' }) };
     }
 
-    const SHOPIFY_TOKEN = process.env.SHOPIFY_TOKEN;
-    const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
+    const response = await fetch('https://hooks.zapier.com/hooks/catch/27968366/43qynod/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orden_id: orden_id,
+        ubicacion: ubicacion
+      })
+    });
 
-    const query = `
-      mutation updateOrderNote($input: OrderInput!) {
-        orderUpdate(input: $input) {
-          order { id note }
-          userErrors { field message }
-        }
-      }
-    `;
-
-    const variables = {
-      input: {
-        id: `gid://shopify/Order/${orden_id}`,
-        note: `📍 UBICACIÓN DE ENTREGA: ${ubicacion}`
-      }
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true })
     };
-
-    const response = await fetch(
-      `https://${SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/graphql.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': SHOPIFY_TOKEN
-        },
-        body: JSON.stringify({ query, variables })
-      }
-    );
-
-    const data = await response.json();
-    console.log('Respuesta Shopify:', JSON.stringify(data));
-
-    if (data.errors) {
-      return { statusCode: 500, headers, body: JSON.stringify({ error: data.errors }) };
-    }
-
-    return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
 
   } catch (err) {
     console.error('Error:', err);
