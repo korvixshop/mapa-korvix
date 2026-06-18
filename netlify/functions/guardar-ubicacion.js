@@ -10,16 +10,20 @@ exports.handler = async function(event) {
       body: ''
     };
   }
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
   };
+
   try {
     const { orden_id, ubicacion } = JSON.parse(event.body);
+
     const shopifyRes = await fetch(
       `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders.json?name=%23${orden_id}&status=any&limit=5`,
       {
@@ -29,7 +33,9 @@ exports.handler = async function(event) {
         }
       }
     );
+
     const shopifyData = await shopifyRes.json();
+
     if (!shopifyData.orders || shopifyData.orders.length === 0) {
       return {
         statusCode: 404,
@@ -37,8 +43,10 @@ exports.handler = async function(event) {
         body: JSON.stringify({ error: `Pedido #${orden_id} no encontrado` })
       };
     }
+
     const shopify_id = shopifyData.orders[0].id;
     const nota_actual = shopifyData.orders[0].note || '';
+
     const updateRes = await fetch(
       `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders/${shopify_id}.json`,
       {
@@ -50,4 +58,35 @@ exports.handler = async function(event) {
         body: JSON.stringify({
           order: {
             id: shopify_id,
-            note:
+            note: nota_actual
+              ? `${nota_actual}\nUbicación GPS: ${ubicacion}`
+              : `Ubicación GPS: ${ubicacion}`
+          }
+        })
+      }
+    );
+
+    const updateData = await updateRes.json();
+
+    if (!updateRes.ok) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Error al actualizar pedido', detalle: updateData })
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ ok: true, mensaje: `Ubicación guardada en pedido #${orden_id}` })
+    };
+
+  } catch (err) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: 'Error interno', detalle: err.message })
+    };
+  }
+};
