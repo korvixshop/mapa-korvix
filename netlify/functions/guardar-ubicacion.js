@@ -22,21 +22,28 @@ exports.handler = async function(event) {
   };
 
   try {
-    const { orden_id, ubicacion } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    console.log('Body recibido:', JSON.stringify(body));
 
-    const shopifyRes = await fetch(
-      `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders.json?name=%23${orden_id}&status=any&limit=5`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': process.env.SHOPIFY_TOKEN,
-          'Content-Type': 'application/json'
-        }
+    const { orden_id, ubicacion } = body;
+    console.log('orden_id:', orden_id, '| ubicacion:', ubicacion);
+
+    const url = `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders.json?name=%23${orden_id}&status=any&limit=5`;
+    console.log('URL Shopify:', url);
+
+    const shopifyRes = await fetch(url, {
+      headers: {
+        'X-Shopify-Access-Token': process.env.SHOPIFY_TOKEN,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
+    console.log('Shopify status:', shopifyRes.status);
     const shopifyData = await shopifyRes.json();
+    console.log('Shopify data:', JSON.stringify(shopifyData));
 
     if (!shopifyData.orders || shopifyData.orders.length === 0) {
+      console.log('Pedido no encontrado');
       return {
         statusCode: 404,
         headers,
@@ -46,6 +53,7 @@ exports.handler = async function(event) {
 
     const shopify_id = shopifyData.orders[0].id;
     const nota_actual = shopifyData.orders[0].note || '';
+    console.log('shopify_id:', shopify_id, '| nota_actual:', nota_actual);
 
     const updateRes = await fetch(
       `https://${process.env.SHOPIFY_STORE}.myshopify.com/admin/api/2024-01/orders/${shopify_id}.json`,
@@ -66,7 +74,9 @@ exports.handler = async function(event) {
       }
     );
 
+    console.log('Update status:', updateRes.status);
     const updateData = await updateRes.json();
+    console.log('Update response:', JSON.stringify(updateData));
 
     if (!updateRes.ok) {
       return {
@@ -83,6 +93,7 @@ exports.handler = async function(event) {
     };
 
   } catch (err) {
+    console.log('Error catch:', err.message);
     return {
       statusCode: 500,
       headers,
